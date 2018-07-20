@@ -139,6 +139,7 @@ node('master') {
 
   }
 }
+}
 
 def dockerCmd(args) {
     sh "sudo ${DOCKER}/docker ${args}"
@@ -147,7 +148,7 @@ def dockerCmd(args) {
 def getReleasedVersion() {
     return (readFile('pom.xml') =~ '<version>(.+)-SNAPSHOT</version>')[0][1]
 }
-}
+
 /*def call(body) {
  
        def config = [:]
