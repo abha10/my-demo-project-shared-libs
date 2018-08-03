@@ -29,7 +29,7 @@ node('master') {
 
     stage('Deploy @ Test Envirnoment') {
         dir('app') {
-               dockerCmd 'run -d -p 9999:9999 --name "snapshot" --network="host" ${application_image_tag}:SNAPSHOT'
+               dockerCmd "run -d -p 9999:9999 --name 'snapshot' --network='host' ${application_image_tag}:SNAPSHOT"
          }
     }
 
@@ -45,7 +45,7 @@ node('master') {
         }
 
         dockerCmd 'rm -f snapshot'
-        dockerCmd 'run -d -p 9999:9999 --name "snapshot" --network="host" ${application_image_tag}:SNAPSHOT'
+        dockerCmd "run -d -p 9999:9999 --name 'snapshot' --network='host' ${application_image_tag}:SNAPSHOT"
 
         try {
             withMaven(maven: 'Maven 3') {
@@ -81,7 +81,7 @@ node('master') {
         //def rtDocker = Artifactory.docker server: server
        // Push a docker image to Artifactory (here we're pushing hello-world:latest). The push method also expects
       // Artifactory repository name (<target-artifactory-repository>).
-       def buildInfo = rtDocker.push "${application_image_tag}:SNAPSHOT', 'docker-snapshot-images"
+       def buildInfo = rtDocker.push "${application_image_tag}:SNAPSHOT", 'docker-snapshot-images'
 
        //Publish the build-info to Artifactory:
        server.publishBuildInfo buildInfo
