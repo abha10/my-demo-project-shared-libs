@@ -1,10 +1,10 @@
 #!groovy
 def call(body){
- def config = [:]
-body.resolveStrategy = Closure.DELEGATE_FIRST
-       body.delegate = config
-       body()
 def releasedVersion
+def config = [:]
+body.resolveStrategy = Closure.DELEGATE_FIRST
+body.delegate = config
+body()
 
 node('master') {
   def dockerTool = tool name: 'docker', type: 'org.jenkinsci.plugins.docker.commons.tools.DockerTool'
@@ -25,8 +25,7 @@ node('master') {
         withMaven(maven: 'Maven 3') {
             dir('app') {
                 sh 'mvn clean package'
-		sh "echo ${config.application_image_tag}"
-		    dockerCmd "build --tag ${config.application_image_tag}:SNAPSHOT ."
+		    dockerCmd 'build --tag ${config.application_image_tag}:SNAPSHOT .'
             }
         }
     }
@@ -34,7 +33,7 @@ node('master') {
 
     stage('Deploy @ Test Envirnoment') {
         dir('app') {
-               dockerCmd "run -d -p 9999:9999 --name 'snapshot' --network='host' ${application_image_tag}:SNAPSHOT"
+               dockerCmd "run -d -p 9999:9999 --name 'snapshot' --network='host' ${config.application_image_tag}:SNAPSHOT"
          }
     }
 
@@ -50,7 +49,7 @@ node('master') {
         }
 
         dockerCmd 'rm -f snapshot'
-        dockerCmd "run -d -p 9999:9999 --name 'snapshot' --network='host' ${application_image_tag}:SNAPSHOT"
+        dockerCmd "run -d -p 9999:9999 --name 'snapshot' --network='host' ${config.application_image_tag}:SNAPSHOT"
 
         try {
             withMaven(maven: 'Maven 3') {
@@ -82,11 +81,11 @@ node('master') {
 	   
 	   
        // Create an Artifactory Docker instance. The instance stores the Artifactory credentials and the Docker daemon host address:
-       def rtDocker = Artifactory.docker server: server, host: "tcp://34.248.134.77:2375"
+       def rtDocker = Artifactory.docker server: server, host: "${config.dockerHost}"
         //def rtDocker = Artifactory.docker server: server
        // Push a docker image to Artifactory (here we're pushing hello-world:latest). The push method also expects
       // Artifactory repository name (<target-artifactory-repository>).
-       def buildInfo = rtDocker.push "${application_image_tag}:SNAPSHOT", 'docker-snapshot-images'
+       def buildInfo = rtDocker.push "${config.application_image_tag}:SNAPSHOT", 'docker-snapshot-images'
 
        //Publish the build-info to Artifactory:
        server.publishBuildInfo buildInfo
@@ -104,7 +103,7 @@ node('master') {
                     sh "git config user.email ghatkar.abhaya@gmail.com && git config user.name abha10"
                     sh "mvn release:prepare release:perform -Dusername=${username} -Dpassword=${password}"
                 }
-                dockerCmd "build --tag ${application_image_tag}:${releasedVersion} ."
+                dockerCmd "build --tag ${config.application_image_tag}:${releasedVersion} ."
             }
         }
     }
@@ -127,7 +126,7 @@ node('master') {
        
        // Push a docker image to Artifactory (here we're pushing hello-world:latest). The push method also expects
        // Artifactory repository name (<target-artifactory-repository>).
-	    def buildInfo = rtDocker.push "${application_image_tag}:${releasedVersion}", 'docker-release-images'
+	    def buildInfo = rtDocker.push "${config.application_image_tag}:${releasedVersion}", 'docker-release-images'
 
        //Publish the build-info to Artifactory:
        server.publishBuildInfo buildInfo
@@ -139,7 +138,7 @@ node('master') {
     }
 
     stage('Deploy @ Prod') {
-	    dockerCmd "run -d -p 9999:9999 --name 'production' ${application_image_tag}:${releasedVersion}"
+	    dockerCmd "run -d -p 9999:9999 --name 'production' ${config.application_image_tag}:${releasedVersion}"
     }
 
   }
