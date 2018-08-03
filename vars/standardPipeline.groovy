@@ -1,5 +1,9 @@
 #!groovy
 def call(body){
+ def config = [:]
+body.resolveStrategy = Closure.DELEGATE_FIRST
+       body.delegate = config
+       body()
 def releasedVersion
 
 node('master') {
@@ -21,8 +25,8 @@ node('master') {
         withMaven(maven: 'Maven 3') {
             dir('app') {
                 sh 'mvn clean package'
-		sh 'echo ${application_image_tag}'
-		    dockerCmd "build --tag ${application_image_tag}:SNAPSHOT ."
+		sh "echo ${config.application_image_tag}"
+		    dockerCmd "build --tag ${config.application_image_tag}:SNAPSHOT ."
             }
         }
     }
