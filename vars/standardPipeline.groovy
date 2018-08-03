@@ -21,7 +21,7 @@ node('master') {
         withMaven(maven: 'Maven 3') {
             dir('app') {
                 sh 'mvn clean package'
-		    dockerCmd 'build --tag ${application_image_tag}:SNAPSHOT .'
+		    dockerCmd "build --tag ${application_image_tag}:SNAPSHOT ."
             }
         }
     }
